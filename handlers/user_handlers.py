@@ -3,7 +3,8 @@ from copy import deepcopy
 from aiogram import F, Router
 from aiogram.filters import Command, CommandStart
 from aiogram.types import CallbackQuery, Message
-from database.database import user_dict_template, users_db
+from database.database import user_dict_template, users_db, \
+    add_userinfo_in_db, update_userinfo_in_db
 from keyboards.keyboards import (create_quiz_keyboard,
                                  begin_quiz_keyboard,
                                  return_quiz_keyboard)
@@ -18,8 +19,10 @@ router = Router()
 
 
 def create_new_user_db(message: Message):
-    if message.from_user.id not in users_db:
-        users_db[message.from_user.id] = deepcopy(user_dict_template)
+    user_id = message.from_user.id
+    if (user_id not in users_db) and not message.from_user.is_bot:
+        users_db[user_id] = deepcopy(user_dict_template)
+        add_userinfo_in_db(user_id, user_dict_template)
 
 
 def is_riddle_last(message: Message):
@@ -137,3 +140,5 @@ async def guess_right_riddle_answer(callback: CallbackQuery):
             text=riddle.text,
             reply_markup=create_quiz_keyboard(riddle)
         )
+    
+    update_userinfo_in_db(callback.from_user.id, users_db[callback.from_user.id])

@@ -7,6 +7,7 @@ from aiogram.enums import ParseMode
 from config_data.config import Config, load_config
 from handlers import other_handlers, user_handlers
 from keyboards.main_menu import set_main_menu
+from database.database import initialize_database
 
 # Инициализируем логгер
 logger = logging.getLogger(__name__)
@@ -22,6 +23,9 @@ async def main():
 
     # Выводим в консоль информацию о начале запуска бота
     logger.info('Starting bot')
+
+    # Прогружаем базу данных о пользователях
+    initialize_database()
 
     # Загружаем конфиг в переменную config
     config: Config = load_config()
