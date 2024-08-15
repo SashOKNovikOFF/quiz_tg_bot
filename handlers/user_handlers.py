@@ -2,15 +2,21 @@ from copy import deepcopy
 
 from aiogram import F, Router
 from aiogram.filters import Command, CommandStart
-from aiogram.types import CallbackQuery, Message
+from aiogram.types import CallbackQuery, Message, FSInputFile
 from database.database import user_dict_template, users_db, \
-    add_userinfo_in_db, update_userinfo_in_db
+    add_userinfo_in_db, update_username_in_db, \
+    update_language_in_db, update_userinfo_in_db
 from keyboards.keyboards import (create_quiz_keyboard,
                                  begin_quiz_keyboard,
-                                 return_quiz_keyboard)
-from lexicon.lexicon import LEXICON
+                                 choose_language_kb,
+                                 alga_button_kb,
+                                 next_tale_kb,
+                                 next_level_button_kb,
+                                 return_buttons_kb)
+from lexicon.lexicon import LEXICON, LEX, LEXICON_RU_LAMBDA, TALES
 from services.file_handling import riddles
 import logging
+import random
 
 # Инициализируем логгер
 logger = logging.getLogger(__name__)
@@ -25,14 +31,8 @@ def create_new_user_db(message: Message):
         add_userinfo_in_db(user_id, user_dict_template)
 
 
-def is_riddle_last(message: Message):
-    current_riddle = users_db[message.from_user.id]['current_riddle']
-    return current_riddle == len(riddles) - 1
-
-
-def is_riddle_last(callback: CallbackQuery):
-    current_riddle = users_db[callback.from_user.id]['current_riddle']
-    return current_riddle == len(riddles) - 1
+def is_riddle_last(current_riddle: int):
+    return current_riddle >= 5
 
 
 # Этот хэндлер будет срабатывать на команду "/start" -
@@ -41,10 +41,56 @@ def is_riddle_last(callback: CallbackQuery):
 @router.message(CommandStart())
 async def process_start_command(message: Message):
     create_new_user_db(message)
+    user = message.from_user
+    user_id = user.id
+    if users_db[user_id]['username'] == "":
+        users_db[user_id]['username'] = user.first_name
+        update_username_in_db(user_id, users_db[user_id])
+
     await message.answer(
-        text=LEXICON[message.text],
-        reply_markup=begin_quiz_keyboard()
+        text=LEXICON_RU_LAMBDA['greeting'](user.first_name),
+        reply_markup=choose_language_kb()
     )
+
+
+# Этот хэндлер будет срабатывать на инлайн-кнопку "ru/ba_lang_button"
+# и здороваться с пользователем, используя его имя
+@router.callback_query((F.data == 'ru_lang_button') | (F.data == 'ba_lang_button'))
+async def process_language_command(callback: CallbackQuery):
+    user = callback.from_user
+    user_id = user.id
+    users_db[user_id]['lang'] = callback.data[:2]
+    update_language_in_db(user_id, users_db[user_id])
+
+    lang = users_db[user_id]['lang']
+    await callback.message.edit_text(
+        text=LEX[lang]['rules'],
+        reply_markup=alga_button_kb(lang)
+    )
+
+
+# Этот хэндлер будет срабатывать на инлайн-кнопку "alga_button"
+#  или "next_tale_button" и перейти к прочтению сказки
+@router.callback_query((F.data == 'alga_button') | (F.data == 'next_tale_button') | (F.data == 'return_to_tales_button'))
+async def process_tales_command(callback: CallbackQuery):
+    user = callback.from_user
+    user_id = user.id
+    lang = users_db[user_id]['lang']
+    
+    if users_db[user_id]['tale_num'] == (len(TALES[lang]) - 1):
+        await callback.message.edit_text(
+            text=LEX[lang]['end_of_tales'],
+            reply_markup=begin_quiz_keyboard(lang)
+        )
+    else:
+        users_db[user_id]['tale_num'] += 1
+        update_userinfo_in_db(user_id, users_db[user_id])
+
+        tale_num = users_db[user_id]['tale_num']
+        await callback.message.edit_text(
+            text=TALES[lang][tale_num - 1],
+            reply_markup=next_tale_kb(lang, tale_num - 1)
+        )
 
 
 # Этот хэндлер будет срабатывать на команду "/help"
@@ -55,90 +101,70 @@ async def process_help_command(message: Message):
     await message.answer(LEXICON[message.text])
 
 
-# Этот хэндлер будет срабатывать на команду "/begin_quiz"
+# Этот хэндлер будет срабатывать на инлайн-кнопки "begin_quiz_button"
 # и отправлять пользователю текущую загадку с кнопками вариантов ответа
-@router.message(Command(commands='begin_quiz'))
-async def process_begin_quiz_command(message: Message):
-    create_new_user_db(message)
-    
-    if is_riddle_last(message):
-        await message.answer(text=LEXICON['end'])
-    else:
-        riddle = riddles[users_db[message.from_user.id]['current_riddle']]
-        await message.answer(
-            text=riddle.text,
-            reply_markup=create_quiz_keyboard(riddle)
-        )
-
-
-# Этот хэндлер будет срабатывать на команду "/stat"
-# и отправлять пользователю текущий статус по отгаданным загадкам
-@router.message(Command(commands='stat'))
-async def process_stat_command(message: Message):
-    create_new_user_db(message)
-    
-    user_data = users_db[message.from_user.id]
-    current_points    = user_data['current_points']
-    current_level     = user_data['current_level']
-    total_riddles_num = user_data['total_riddles_num']
-    
-    text = f"""
-    <b>Ваш текущий результат</b>:
-    
-    Текущий уровень - {current_level}
-    Количество полученных баллов - {current_points}
-    Количество полученных загадок - {total_riddles_num}
-    """
-    await message.answer(
-        text=text,
-        reply_markup=return_quiz_keyboard()
-    )
-
-
-# Этот хэндлер будет срабатывать на инлайн-кнопки "begin_quiz", "return_quiz"
-# и отправлять пользователю текущую загадку с кнопками вариантов ответа
-@router.callback_query((F.data == 'begin_quiz') | (F.data == 'return_quiz'))
+@router.callback_query(F.data == 'begin_quiz_button')
 async def process_return_quiz_command(callback: CallbackQuery):
-    create_new_user_db(callback.message)
+    callback_user = callback.from_user
+    user_id = callback_user.id
+    user = users_db[user_id]
     
-    if is_riddle_last(callback):
-        logging.info("Успешно пройдены все загадки")
-        await callback.message.answer(text=LEXICON['end'])
-    else:
-        logging.info("Ещё не всё отгадали")
-        riddle = riddles[users_db[callback.from_user.id]['current_riddle']]
-        await callback.message.answer(
-            text=riddle.text,
-            reply_markup=create_quiz_keyboard(riddle)
-        )
+    riddles_list = list(range(0, len(riddles)))
+    random.shuffle(riddles_list)
+    user['current_riddles_list'] = ""
+    for riddle_num in range(0, 5):
+        user['current_riddles_list'] += f"{riddles_list[riddle_num]}, "
+    update_userinfo_in_db(user_id, user)
+    
+    riddle = riddles[riddles_list[0]]
+    await callback.message.edit_text(
+        text=riddle.text,
+        reply_markup=create_quiz_keyboard(riddle)
+    )
 
 
 # Этот хэндлер будет срабатывать на нажатие инлайн-кнопки
 # с номером варианта и сообщать нам о выигрыше/проигрыше
 @router.callback_query(lambda x: x.data in {"0", "1", "2", "3"})
 async def guess_right_riddle_answer(callback: CallbackQuery):
-    current_riddle = riddles[users_db[callback.from_user.id]['current_riddle']]
-    if int(callback.data) == current_riddle.right_variant:
-        users_db[callback.from_user.id]['current_points'] += 1
-        if not is_riddle_last(callback):
-            users_db[callback.from_user.id]['current_riddle'] += 1
-            users_db[callback.from_user.id]['total_riddles_num'] += 1
+    callback_user = callback.from_user
+    user_id = callback_user.id
+    user = users_db[user_id]
+    lang = user['lang']
 
-        await callback.message.answer('Ты угадал! Ты получил 1 балл.')
-    else:
-        if not is_riddle_last(callback):
-            users_db[callback.from_user.id]['current_riddle'] += 1
-            users_db[callback.from_user.id]['total_riddles_num'] += 1
-        
-        await callback.message.answer('Ты не угадал! :(')
+    current_riddles_list = user['current_riddles_list'].split(', ')
+    curr_riddle_num = int(current_riddles_list[user['current_riddle']])
+    current_riddle = riddles[curr_riddle_num]
+
+    if int(callback.data) == current_riddle.right_variant:
+        user['current_points'] += 5
     
-    if is_riddle_last(callback):
-        await callback.message.answer(text=LEXICON['end'])
+    if not is_riddle_last(user['current_riddle']):
+        user['current_riddle'] += 1
+    
+    if is_riddle_last(user['current_riddle']):
+        if user['current_points'] >= 25:
+            user['current_level'] += 1
+            await callback.message.edit_text(
+                text=LEX[lang]['quiz_win'],
+                reply_markup=next_level_button_kb(lang)
+            )
+        else:
+            await callback.message.edit_text(
+                text=LEX[lang]['quiz_lose'],
+                reply_markup=return_buttons_kb(lang)
+            )
+        
+        user['current_points'] = 0
+        user['current_riddle'] = 0
+        user['current_riddles_list'] = ""
+        user['tale_num'] = 0
     else:
-        riddle = riddles[users_db[callback.from_user.id]['current_riddle']]
-        await callback.message.answer(
+        next_riddle_num = int(current_riddles_list[user['current_riddle']])
+        riddle = riddles[next_riddle_num]
+        await callback.message.edit_text(
             text=riddle.text,
             reply_markup=create_quiz_keyboard(riddle)
         )
     
-    update_userinfo_in_db(callback.from_user.id, users_db[callback.from_user.id])
+    update_userinfo_in_db(user_id, user)
