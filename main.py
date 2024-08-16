@@ -6,7 +6,6 @@ from aiogram.client.default import DefaultBotProperties
 from aiogram.enums import ParseMode
 from config_data.config import Config, load_config
 from handlers import other_handlers, user_handlers
-from keyboards.main_menu import set_main_menu
 from database.database import initialize_database
 
 # Инициализируем логгер
@@ -36,9 +35,6 @@ async def main():
         default=DefaultBotProperties(parse_mode=ParseMode.HTML)
     )
     dp = Dispatcher()
-
-    # Настраиваем главное меню бота
-    await set_main_menu(bot)
 
     # Регистрируем роутеры в диспетчере
     dp.include_router(user_handlers.router)

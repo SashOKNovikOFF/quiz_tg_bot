@@ -2,50 +2,53 @@ import os
 import sys
 from dataclasses import dataclass
 
-RIDDLES_PATH = 'riddles/riddles.txt'
+RIDDLES_PATH = [
+    'riddles/riddles_1.txt',
+    'riddles/riddles_2.txt',
+    'riddles/riddles_3.txt',
+    'riddles/riddles_4.txt',
+    'riddles/riddles_5.txt',
+]
 
 @dataclass
 class Riddle:
     text: str
-    diff_level: str
     variants: list[str]
     right_variant: int
 
 
-riddles: list[Riddle] = []
+riddles: list[list[Riddle]] = [
+    [], [], [], [], []
+]
 
 
 # Функция, возвращающая список загадок с вариантами ответов и верным ответом
-def prepare_riddles(path: str) -> None:
+def prepare_riddles(block_num: int, path: str) -> None:
     f = open(path, 'r')
     counter = 0
 
     text = ""
-    diff_level = ""
     variants = []
     right_variant = 0
 
     for line in f:
-        line_num = counter % 7
+        line_num = counter % 6
         match line_num:
             case 0:
-                diff_level = line
-            case 1:
                 text = line
-            case 2 | 3 | 4 | 5:
+            case 1 | 2 | 3 | 4:
                 if line.startswith("+ "):
                     variants.append(line.split("+ ")[1])
                     right_variant = len(variants) - 1
                 else:
                     variants.append(line)
-            case 6:
+            case 5:
                 riddle = Riddle(
                     text=text,
-                    diff_level=diff_level,
                     variants=variants.copy(),
                     right_variant=right_variant
                 )
-                riddles.append(riddle)
+                riddles[block_num].append(riddle)
                 variants.clear()
         counter += 1
     f.close()
@@ -53,4 +56,6 @@ def prepare_riddles(path: str) -> None:
 
 
 # Вызов функции prepare_riddles для подготовки загадок из текстового файла
-prepare_riddles(os.path.join(sys.path[0], os.path.normpath(RIDDLES_PATH)))
+for ind in range(0, len(RIDDLES_PATH)):
+    path = os.path.join(sys.path[0], os.path.normpath(RIDDLES_PATH[ind]))
+    prepare_riddles(ind, path)

@@ -1,6 +1,6 @@
 ﻿from aiogram.types import InlineKeyboardButton, InlineKeyboardMarkup
 from aiogram.utils.keyboard import InlineKeyboardBuilder
-from lexicon.lexicon import LEXICON, LEXICON_RU, LEX, TALES_URL
+from lexicon.lexicon import LEXICON_RU, LEXICON, TALES_URL
 from services.file_handling import Riddle
 
 
@@ -26,7 +26,7 @@ def begin_quiz_keyboard(lang: str) -> InlineKeyboardMarkup:
     # Добавляем в билдер кнопку возврата в игру
     kb_builder.row(
         InlineKeyboardButton(
-            text=LEX[lang]['begin_quiz_button'],
+            text=LEXICON[lang]['begin_quiz_button'],
             callback_data='begin_quiz_button'
         )
     )
@@ -59,8 +59,22 @@ def alga_button_kb(lang: str) -> InlineKeyboardMarkup:
     # Добавляем в билдер кнопку возврата в игру
     kb_builder.row(
         InlineKeyboardButton(
-            text=LEX[lang]['alga_button'],
+            text=LEXICON[lang]['alga_button'],
             callback_data='alga_button'
+        )
+    )
+    # Возвращаем объект инлайн-клавиатуры
+    return kb_builder.as_markup()
+
+
+def outer_url_kb(lang: str, tale_num: int) -> InlineKeyboardMarkup:
+    # Инициализируем билдер
+    kb_builder = InlineKeyboardBuilder()
+    # Добавляем в билдер кнопку возврата в игру
+    kb_builder.row(
+        InlineKeyboardButton(
+            text=LEXICON[lang]['read_tale_button'],
+            url=TALES_URL[lang][tale_num]
         )
     )
     # Возвращаем объект инлайн-клавиатуры
@@ -73,14 +87,28 @@ def next_tale_kb(lang: str, tale_num: int) -> InlineKeyboardMarkup:
     # Добавляем в билдер кнопку возврата в игру
     kb_builder.row(
         *[InlineKeyboardButton(
-            text=LEX[lang]['read_tale_button'],
+            text=LEXICON[lang]['read_tale_button'],
             url=TALES_URL[lang][tale_num]
         ),
         InlineKeyboardButton(
-            text=LEX[lang]['next_tale_button'],
+            text=LEXICON[lang]['next_tale_button'],
             callback_data='next_tale_button'
         )],
         width=1
+    )
+    # Возвращаем объект инлайн-клавиатуры
+    return kb_builder.as_markup()
+
+
+def next_info_block_kb(lang: str) -> InlineKeyboardMarkup:
+    # Инициализируем билдер
+    kb_builder = InlineKeyboardBuilder()
+    # Добавляем в билдер кнопку возврата в игру
+    kb_builder.row(
+        InlineKeyboardButton(
+            text=LEXICON[lang]['next_tale_button'],
+            callback_data='next_info_block_button'
+        )
     )
     # Возвращаем объект инлайн-клавиатуры
     return kb_builder.as_markup()
@@ -92,7 +120,7 @@ def next_level_button_kb(lang: str) -> InlineKeyboardMarkup:
     # Добавляем в билдер кнопку возврата в игру
     kb_builder.row(
         InlineKeyboardButton(
-            text=LEX[lang]['next_level_button'],
+            text=LEXICON[lang]['next_level_button'],
             callback_data='next_level_button'
         )
     )
@@ -106,11 +134,11 @@ def return_buttons_kb(lang: str) -> InlineKeyboardMarkup:
     # Добавляем в билдер кнопку возврата в игру
     kb_builder.row(
         *[InlineKeyboardButton(
-            text=LEX[lang]['begin_quiz_button'],
+            text=LEXICON[lang]['begin_quiz_button'],
             callback_data='begin_quiz_button'
         ),
         InlineKeyboardButton(
-            text=LEX[lang]['return_to_tales_button'],
+            text=LEXICON[lang]['return_to_tales_button'],
             callback_data='return_to_tales_button'
         )],
         width=1
