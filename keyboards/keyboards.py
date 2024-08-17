@@ -1,6 +1,6 @@
 ﻿from aiogram.types import InlineKeyboardButton, InlineKeyboardMarkup
 from aiogram.utils.keyboard import InlineKeyboardBuilder
-from lexicon.lexicon import LEXICON_RU, LEXICON, TALES_URL
+from lexicon.lexicon import LEXICON_RU, LEXICON, TALES_URL, RETURN_BUTTON
 from services.file_handling import Riddle
 
 
@@ -128,9 +128,16 @@ def next_level_button_kb(lang: str) -> InlineKeyboardMarkup:
     return kb_builder.as_markup()
 
 
-def return_buttons_kb(lang: str) -> InlineKeyboardMarkup:
+def return_buttons_kb(lang: str, curr_level: int) -> InlineKeyboardMarkup:
     # Инициализируем билдер
     kb_builder = InlineKeyboardBuilder()
+    if curr_level == 0:
+        return_text = LEXICON[lang]['return_to_tales_button']
+        return_str = 'return_to_tales_button'
+    else:
+        return_text = RETURN_BUTTON[lang][curr_level + 1]
+        return_str = 'next_info_block_button'
+
     # Добавляем в билдер кнопку возврата в игру
     kb_builder.row(
         *[InlineKeyboardButton(
@@ -138,8 +145,8 @@ def return_buttons_kb(lang: str) -> InlineKeyboardMarkup:
             callback_data='begin_quiz_button'
         ),
         InlineKeyboardButton(
-            text=LEXICON[lang]['return_to_tales_button'],
-            callback_data='return_to_tales_button'
+            text=return_text,
+            callback_data=return_str
         )],
         width=1
     )

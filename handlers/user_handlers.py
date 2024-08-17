@@ -209,7 +209,7 @@ async def guess_right_riddle_answer(callback: CallbackQuery):
         else:
             await callback.message.edit_text(
                 text=right_answer_str + LEXICON[lang]['quiz_lose'],
-                reply_markup=return_buttons_kb(lang)
+                reply_markup=return_buttons_kb(lang, curr_level)
             )
         
         user['current_points'] = 0
