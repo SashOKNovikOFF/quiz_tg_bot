@@ -159,18 +159,17 @@ async def process_return_quiz_command(callback: CallbackQuery):
     callback_user = callback.from_user
     user_id = callback_user.id
     user = users_db[user_id]
+    lang = user['lang']
     curr_level = user['current_level'] - 1
     
-    riddles_list = list(range(0, len(riddles[curr_level])))
+    riddles_list = list(range(0, len(riddles[lang][curr_level])))
     random.shuffle(riddles_list)
     user['current_riddles_list'] = ""
-    logger.info(f"len(riddles[curr_level]): {len(riddles[curr_level])}")
-    logger.info(f"riddles_list: {riddles_list}")
     for riddle_num in range(0, 5):
         user['current_riddles_list'] += f"{riddles_list[riddle_num]}, "
     update_userinfo_in_db(user_id, user)
     
-    riddle = riddles[curr_level][riddles_list[0]]
+    riddle = riddles[lang][curr_level][riddles_list[0]]
     await callback.message.answer(
         text=riddle.text,
         reply_markup=create_quiz_keyboard(riddle)
@@ -189,7 +188,7 @@ async def guess_right_riddle_answer(callback: CallbackQuery):
 
     current_riddles_list = user['current_riddles_list'].split(', ')
     curr_riddle_num = int(current_riddles_list[user['current_riddle']])
-    current_riddle = riddles[curr_level][curr_riddle_num]
+    current_riddle = riddles[lang][curr_level][curr_riddle_num]
 
     right_answer_str = ""
     if int(callback.data) == current_riddle.right_variant:
@@ -218,7 +217,7 @@ async def guess_right_riddle_answer(callback: CallbackQuery):
         user['tale_num'] = 0
     else:
         next_riddle_num = int(current_riddles_list[user['current_riddle']])
-        riddle = riddles[curr_level][next_riddle_num]
+        riddle = riddles[lang][curr_level][next_riddle_num]
         await callback.message.edit_text(
             text=right_answer_str + riddle.text,
             reply_markup=create_quiz_keyboard(riddle)

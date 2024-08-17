@@ -1,10 +1,7 @@
 from copy import deepcopy
 
 LEXICON_COMMANDS: dict[str, str] = {
-    '/start': 'Показать стартовое окно бота',
-    '/begin_quiz': 'Начать/продолжить разгадывать загадки',
-    '/stat': 'Мои результаты викторины',
-    '/help': 'Справка по работе бота'
+    '/start': 'Выбрать язык и запустить бот'
 }
 
 LEXICON_RU: dict[str, str] = {
