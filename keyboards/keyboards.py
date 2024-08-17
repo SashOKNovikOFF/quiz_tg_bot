@@ -113,11 +113,11 @@ def next_tale_kb(lang: str, tale_num: int) -> InlineKeyboardMarkup:
     return kb_builder.as_markup()
 
 
-def next_info_block_kb(lang: str, answer="") -> InlineKeyboardMarkup:
+def next_info_block_kb(lang: str, answer="", url="") -> InlineKeyboardMarkup:
     # Инициализируем билдер
     kb_builder = InlineKeyboardBuilder()
 
-    if answer == "":
+    if answer == "" and url == "":
         # Добавляем в билдер кнопку возврата в игру
         kb_builder.row(
             InlineKeyboardButton(
@@ -125,12 +125,24 @@ def next_info_block_kb(lang: str, answer="") -> InlineKeyboardMarkup:
                 callback_data='next_info_block_button'
             )
         )
-    else:
+    elif url == "":
         kb_builder.row(
             InlineKeyboardButton(
                 text=answer,
                 callback_data='next_info_block_button'
             )
+        )
+    else:
+        kb_builder.row(
+            *[InlineKeyboardButton(
+                text=answer,
+                url=url
+            ),
+            InlineKeyboardButton(
+                text=LEXICON[lang]['next_tale_button'],
+                callback_data='next_info_block_button'
+            )],
+            width=1
         )
 
     # Возвращаем объект инлайн-клавиатуры

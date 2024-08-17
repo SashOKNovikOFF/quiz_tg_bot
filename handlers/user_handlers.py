@@ -65,10 +65,24 @@ async def process_language_command(callback: CallbackQuery):
     update_language_in_db(user_id, users_db[user_id])
 
     lang = users_db[user_id]['lang']
-    await callback.message.edit_text(
-        text=LEXICON[lang]['rules'],
-        reply_markup=alga_button_kb(lang)
-    )
+    if users_db[user_id]['current_level'] == 1:
+        await callback.message.edit_text(
+            text=LEXICON[lang]['rules'],
+            reply_markup=alga_button_kb(lang)
+        )
+    elif users_db[user_id]['current_level'] >= 6:
+        # TODO: выделить в отдельную функцию
+        image = FSInputFile("images/ornament.jpg", 'rb')
+        await callback.message.answer_photo(photo=image)
+        await callback.message.answer(
+            text=LEXICON[lang]['end_of_quiz']
+        )
+        return
+    else:
+        await callback.message.edit_text(
+            text=LEXICON[lang]['continue_quiz'],
+            reply_markup=next_level_button_kb(lang)
+        )
 
 
 # Этот хэндлер будет срабатывать на инлайн-кнопку "alga_button"
@@ -159,6 +173,12 @@ async def process_tales_command(callback: CallbackQuery):
         # TODO: Особые случаи обработки с клавиатурами
         if curr_level_num == 2 and next_tale_num == 3:
             kb = next_info_block_kb(lang, answer="Проверить ответ")
+        elif curr_level_num == 5 and next_tale_num == 4:
+            kb = next_info_block_kb(
+                lang,
+                answer="Посмотреть фильм",
+                url="https://youtu.be/1SxHYuGMnCw"
+            )
         else:
             kb = next_info_block_kb(lang)
         
@@ -225,10 +245,21 @@ async def guess_right_riddle_answer(callback: CallbackQuery):
     if is_riddle_last(user['current_riddle']):
         if user['current_points'] >= 25:
             user['current_level'] += 1
-            await callback.message.edit_text(
-                text=right_answer_str + LEXICON[lang]['quiz_win'],
-                reply_markup=next_level_button_kb(lang)
-            )
+            if user['current_level'] >= 6:
+                await callback.message.delete()
+                image = FSInputFile("images/ornament.jpg", 'rb')
+                await callback.message.answer_photo(photo=image)
+                await callback.message.answer(
+                    text=LEXICON[lang]['end_of_quiz']
+                )
+    
+                update_userinfo_in_db(user_id, user)
+                return
+            else:
+                await callback.message.edit_text(
+                    text=right_answer_str + LEXICON[lang]['quiz_win'],
+                    reply_markup=next_level_button_kb(lang)
+                )
         else:
             await callback.message.edit_text(
                 text=right_answer_str + LEXICON[lang]['quiz_lose'],
