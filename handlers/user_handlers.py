@@ -124,9 +124,26 @@ async def process_tales_command(callback: CallbackQuery):
         await callback.message.edit_text(
             text=curr_info_blocks[curr_tale_num - 1],
         )
+
+        # TODO: Особые случаи обработки с клавиатурами
+        if curr_level_num == 3:
+            kb = begin_quiz_keyboard(
+                lang,
+                answer="Узнать еще пословицы и поговорки",
+                url="https://folkgame.tilda.ws/poslovicy"
+            )
+        elif curr_level_num == 4:
+            kb = begin_quiz_keyboard(
+                lang,
+                answer="Слушать",
+                url="https://bashmusic.net/ru/music/zolotoe-nasledie/view/playlist/id/380"
+            )
+        else:
+            kb = begin_quiz_keyboard(lang)
+
         await callback.message.answer(
             text=END_OF_INFO[lang][curr_level_num],
-            reply_markup=begin_quiz_keyboard(lang)
+            reply_markup=kb
         )
     else:
         if curr_tale_num != 0:
@@ -138,9 +155,16 @@ async def process_tales_command(callback: CallbackQuery):
         update_userinfo_in_db(user_id, user)
 
         next_tale_num = user['tale_num']
+        
+        # TODO: Особые случаи обработки с клавиатурами
+        if curr_level_num == 2 and next_tale_num == 3:
+            kb = next_info_block_kb(lang, answer="Проверить ответ")
+        else:
+            kb = next_info_block_kb(lang)
+        
         await callback.message.answer(
             text=curr_info_blocks[next_tale_num - 1],
-            reply_markup=next_info_block_kb(lang)
+            reply_markup=kb
         )
 
 
@@ -149,7 +173,7 @@ async def process_tales_command(callback: CallbackQuery):
 @router.message(Command(commands='help'))
 async def process_help_command(message: Message):
     create_new_user_db(message)
-    await message.answer("Хорош меня призывать! Вызови /start и усё!")
+    await message.answer("Нажмите /start для выбора языка и дальнейшей работы бота.")
 
 
 # Этот хэндлер будет срабатывать на инлайн-кнопки "begin_quiz_button"

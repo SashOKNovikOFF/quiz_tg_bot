@@ -20,16 +20,29 @@ def create_quiz_keyboard(riddle: Riddle) -> InlineKeyboardMarkup:
     return kb_builder.as_markup()
 
 
-def begin_quiz_keyboard(lang: str) -> InlineKeyboardMarkup:
+def begin_quiz_keyboard(lang: str, answer="", url="") -> InlineKeyboardMarkup:
     # Инициализируем билдер
     kb_builder = InlineKeyboardBuilder()
     # Добавляем в билдер кнопку возврата в игру
-    kb_builder.row(
-        InlineKeyboardButton(
-            text=LEXICON[lang]['begin_quiz_button'],
-            callback_data='begin_quiz_button'
+    if answer == "" and url == "":
+        kb_builder.row(
+            InlineKeyboardButton(
+                text=LEXICON[lang]['begin_quiz_button'],
+                callback_data='begin_quiz_button'
+            )
         )
-    )
+    else:
+        kb_builder.row(
+            *[InlineKeyboardButton(
+                text=answer,
+                url=url
+            ),
+            InlineKeyboardButton(
+                text=LEXICON[lang]['begin_quiz_button'],
+                callback_data='begin_quiz_button'
+            )],
+            width=1
+        )
     # Возвращаем объект инлайн-клавиатуры
     return kb_builder.as_markup()
 
@@ -100,16 +113,26 @@ def next_tale_kb(lang: str, tale_num: int) -> InlineKeyboardMarkup:
     return kb_builder.as_markup()
 
 
-def next_info_block_kb(lang: str) -> InlineKeyboardMarkup:
+def next_info_block_kb(lang: str, answer="") -> InlineKeyboardMarkup:
     # Инициализируем билдер
     kb_builder = InlineKeyboardBuilder()
-    # Добавляем в билдер кнопку возврата в игру
-    kb_builder.row(
-        InlineKeyboardButton(
-            text=LEXICON[lang]['next_tale_button'],
-            callback_data='next_info_block_button'
+
+    if answer == "":
+        # Добавляем в билдер кнопку возврата в игру
+        kb_builder.row(
+            InlineKeyboardButton(
+                text=LEXICON[lang]['next_tale_button'],
+                callback_data='next_info_block_button'
+            )
         )
-    )
+    else:
+        kb_builder.row(
+            InlineKeyboardButton(
+                text=answer,
+                callback_data='next_info_block_button'
+            )
+        )
+
     # Возвращаем объект инлайн-клавиатуры
     return kb_builder.as_markup()
 
