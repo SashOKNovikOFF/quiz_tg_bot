@@ -187,3 +187,19 @@ def return_buttons_kb(lang: str, curr_level: int) -> InlineKeyboardMarkup:
     )
     # Возвращаем объект инлайн-клавиатуры
     return kb_builder.as_markup()
+
+
+
+
+def return_to_the_beginning_kb(lang: str) -> InlineKeyboardMarkup:
+    # Инициализируем билдер
+    kb_builder = InlineKeyboardBuilder()
+    # Добавляем в билдер кнопку возврата в игру
+    kb_builder.row(
+        InlineKeyboardButton(
+            text=LEXICON[lang]['return_to_the_beginning'],
+            callback_data='return_to_the_beginning_button'
+        )
+    )
+    # Возвращаем объект инлайн-клавиатуры
+    return kb_builder.as_markup()

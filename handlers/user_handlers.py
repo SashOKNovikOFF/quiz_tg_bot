@@ -14,7 +14,8 @@ from keyboards.keyboards import (create_quiz_keyboard,
                                  next_tale_kb,
                                  next_info_block_kb,
                                  next_level_button_kb,
-                                 return_buttons_kb)
+                                 return_buttons_kb,
+                                 return_to_the_beginning_kb)
 from lexicon.lexicon import LEXICON, LEXICON_RU_LAMBDA, TALES, INFO_BLOCKS, END_OF_INFO
 from services.file_handling import riddles
 import logging
@@ -75,7 +76,8 @@ async def process_language_command(callback: CallbackQuery):
         image = FSInputFile("images/ornament.jpg", 'rb')
         await callback.message.answer_photo(photo=image)
         await callback.message.answer(
-            text=LEXICON[lang]['end_of_quiz']
+            text=LEXICON[lang]['end_of_quiz'],
+            reply_markup=return_to_the_beginning_kb(lang)
         )
         return
     else:
@@ -87,13 +89,20 @@ async def process_language_command(callback: CallbackQuery):
 
 # Этот хэндлер будет срабатывать на инлайн-кнопку "alga_button"
 #  или "next_tale_button" и перейти к прочтению сказки
-@router.callback_query((F.data == 'alga_button') | (F.data == 'next_tale_button') | (F.data == 'return_to_tales_button'))
+@router.callback_query((F.data == 'alga_button') | (F.data == 'next_tale_button') | (F.data == 'return_to_tales_button') | (F.data == 'return_to_the_beginning_button'))
 async def process_tales_command(callback: CallbackQuery):
     callback_user = callback.from_user
     user_id = callback_user.id
     user = users_db[user_id]
     lang = user['lang']
     curr_tale_num = user['tale_num']
+    
+    if callback.data == 'return_to_the_beginning_button':
+        user['current_level'] = 1
+        user['current_points'] = 0
+        user['current_riddle'] = 0
+        user['current_riddles_list'] = ""
+        user['tale_num'] = 0
     
     if curr_tale_num == len(TALES[lang]):
         await callback.message.edit_text(
@@ -173,6 +182,8 @@ async def process_tales_command(callback: CallbackQuery):
         # TODO: Особые случаи обработки с клавиатурами
         if curr_level_num == 2 and next_tale_num == 3:
             kb = next_info_block_kb(lang, answer="Проверить ответ")
+        elif curr_level_num == 3 and next_tale_num == 2:
+            kb = next_info_block_kb(lang, answer="Проверить ответ")
         elif curr_level_num == 5 and next_tale_num == 4:
             kb = next_info_block_kb(
                 lang,
@@ -250,7 +261,8 @@ async def guess_right_riddle_answer(callback: CallbackQuery):
                 image = FSInputFile("images/ornament.jpg", 'rb')
                 await callback.message.answer_photo(photo=image)
                 await callback.message.answer(
-                    text=LEXICON[lang]['end_of_quiz']
+                    text=LEXICON[lang]['end_of_quiz'],
+                    reply_markup=return_to_the_beginning_kb(lang)
                 )
     
                 update_userinfo_in_db(user_id, user)
