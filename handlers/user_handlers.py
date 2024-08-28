@@ -150,15 +150,17 @@ async def process_tales_command(callback: CallbackQuery):
 
         # TODO: Особые случаи обработки с клавиатурами
         if curr_level_num == 3:
+            answer = "Узнать еще пословицы и поговорки" if lang == "ru" else "Күберәк мәҡәл һәм әйтем менән танышыу"
             kb = begin_quiz_keyboard(
                 lang,
-                answer="Узнать еще пословицы и поговорки",
+                answer=answer,
                 url="https://folkgame.tilda.ws/poslovicy"
             )
         elif curr_level_num == 4:
+            answer = "Слушать" if lang == "ru" else "Тыңлау"
             kb = begin_quiz_keyboard(
                 lang,
-                answer="Слушать",
+                answer=answer,
                 url="https://bashmusic.net/ru/music/zolotoe-nasledie/view/playlist/id/380"
             )
         else:
@@ -180,14 +182,17 @@ async def process_tales_command(callback: CallbackQuery):
         next_tale_num = user['tale_num']
         
         # TODO: Особые случаи обработки с клавиатурами
-        if curr_level_num == 2 and next_tale_num == 3:
-            kb = next_info_block_kb(lang, answer="Проверить ответ")
+        if curr_level_num == 2 and next_tale_num == 4:
+            answer = "Проверить ответ" if lang == "ru" else "Күнегеүҙәр"
+            kb = next_info_block_kb(lang, answer=answer)
         elif curr_level_num == 3 and next_tale_num == 2:
-            kb = next_info_block_kb(lang, answer="Проверить ответ")
+            answer = "Проверить ответ" if lang == "ru" else "Күнегеүҙәр"
+            kb = next_info_block_kb(lang, answer=answer)
         elif curr_level_num == 5 and next_tale_num == 4:
+            answer = "Посмотреть фильм" if lang == "ru" else "Фильды ҡарау"
             kb = next_info_block_kb(
                 lang,
-                answer="Посмотреть фильм",
+                answer=answer,
                 url="https://youtu.be/1SxHYuGMnCw"
             )
         else:
@@ -247,7 +252,8 @@ async def guess_right_riddle_answer(callback: CallbackQuery):
 
     right_answer_str = ""
     if int(callback.data) == current_riddle.right_variant:
-        right_answer_str = "<i>Ты правильно ответил!</i>\n\n"
+        lang_str = "Ты правильно ответил!" if lang == "ru" else "Һеҙ дөрөҫ яуап бирҙегеҙ!"
+        right_answer_str = f"<i>{lang_str}</i>\n\n"
         user['current_points'] += 5
     
     if not is_riddle_last(user['current_riddle']):
