@@ -49,6 +49,8 @@ async def process_start_command(message: Message):
     if users_db[user_id]['username'] == "":
         users_db[user_id]['username'] = user.first_name
         update_username_in_db(user_id, users_db[user_id])
+    
+    logger.info(f"Количество пользователей: {len(users_db)}")
 
     await message.answer(
         text=LEXICON_RU_LAMBDA['greeting'](user.first_name),
