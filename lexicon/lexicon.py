@@ -173,7 +173,7 @@ TALES_URL_RU: list[str] = [
     'https://folkgame.tilda.ws/lisa-sirota',
     'https://folkgame.tilda.ws/lenivaya-devochka',
     'https://folkgame.tilda.ws/neznaj',
-    'https://folkgame.tilda.ws/zolotye-ruk',
+    'https://folkgame.tilda.ws/zolotye-ruki',
     'https://folkgame.tilda.ws/humaj-ptica',
     'https://folkgame.tilda.ws/yuldybaj-batyr',
     'https://folkgame.tilda.ws/molodoj-ohotnik-i-myaskaj',
